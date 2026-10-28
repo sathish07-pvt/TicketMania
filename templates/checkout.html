@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout & Payment — Ticket Mania{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Breadcrumb -->
+  <div class="d-flex align-items-center gap-2 mb-3 text-secondary small">
+    <a href="{{ url_for('seat_selection', show_id=show.id) }}" class="text-secondary hover-white">
+      <i class="bi bi-chevron-left me-1"></i>Seat Selection
+    </a>
+    <span>/</span>
+    <span class="text-white">Checkout & Payment</span>
+  </div>
+
+  <!-- Error alert container for simulation -->
+  <div id="paymentErrorAlert" class="alert alert-danger d-none shadow-sm mb-4 border-0"></div>
+
+  <div class="row g-4">
+    <!-- Left Column: Order Summary & Itemized Breakdown -->
+    <div class="col-lg-5 order-lg-2">
+      <div class="p-4 rounded-4 border border-secondary shadow-lg sticky-top" style="background: rgba(18, 25, 40, 0.9); top: 90px;">
+        <h4 class="fw-bold text-white mb-3 d-flex align-items-center justify-content-between">
+          <span>Order Summary</span>
+          <span class="badge bg-danger fs-7">{{ summary.ticket_count }} Ticket(s)</span>
+        </h4>
+
+        <!-- Movie & Theatre info -->
+        <div class="d-flex gap-3 pb-3 mb-3 border-bottom border-secondary">
+          <img src="{{ show.movie.poster_url }}" alt="{{ show.movie.title }}" class="rounded shadow" style="width: 60px; height: 85px; object-fit: cover;">
+          <div>
+            <h5 class="fw-bold text-white mb-1">{{ show.movie.title }}</h5>
+            <div class="text-secondary small">{{ show.format }} &bull; {{ show.movie.language }}</div>
+            <div class="text-secondary small">{{ show.theatre.name }}</div>
+            <div class="text-danger small fw-semibold mt-1">
+              {{ show.show_date }} &bull; {{ show.show_time }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Seats list -->
+        <div class="mb-3">
+          <div class="text-secondary small fw-bold mb-2">SEATS SELECTED:</div>
+          <div class="d-flex flex-wrap gap-1">
+            {% for s in seats %}
+              <span class="badge bg-dark border border-secondary text-white py-1 px-2">
+                {{ s.seat_number }} ({{ s.tier }} - ₹{{ s.price|int }})
+              </span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Transparent Price Breakdown -->
+        <div class="bg-dark p-3 rounded-3 border border-secondary mb-3">
+          <div class="d-flex justify-content-between text-secondary small mb-2">
+            <span>Original Theatre Ticket Price:</span>
+            <span class="text-white fw-semibold">₹{{ summary.subtotal_ticket_price }}</span>
+          </div>
+
+          <div class="d-flex justify-content-between text-secondary small mb-2">
+            <span>Base Convenience Fee (₹20 &times; {{ summary.ticket_count }}):</span>
+            <span class="text-white">₹{{ summary.base_convenience_fee }}</span>
+          </div>
+
+          <div class="d-flex justify-content-between text-success small fw-bold mb-2">
+            <span>
+              <i class="bi bi-tag-fill me-1"></i>Ticket Mania {{ "Odd" if summary.is_odd else "Even" }} Discount:
+            </span>
+            <span>-₹{{ summary.discount_amount }}</span>
+          </div>
+
+          <div class="d-flex justify-content-between text-secondary small mb-2 border-top border-secondary pt-2">
+            <span>Final Net Convenience Fee:</span>
+            <span class="text-white fw-bold">₹{{ summary.final_convenience_fee }}</span>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center border-top border-secondary pt-3 mt-1">
+            <span class="fw-bold text-white fs-6">Grand Total Payable:</span>
+            <span class="fw-bold text-danger fs-4">₹{{ summary.grand_total }}</span>
+          </div>
+        </div>
+
+        <!-- Illustrative Competitor Comparison -->
+        <div class="p-3 rounded-3 bg-success-subtle text-success border border-success mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small fw-bold"><i class="bi bi-patch-check-fill me-1"></i>Ticket Mania Savings:</span>
+            <span class="badge bg-success fs-7">Save ₹{{ summary.customer_savings|int }}!</span>
+          </div>
+          <div class="small text-muted" style="font-size: 0.78rem;">
+            Traditional booking platforms charge ~₹35 per ticket (₹{{ summary.conventional_fee|int }}). With Ticket Mania you pay only ₹{{ summary.final_convenience_fee|int }} in convenience fees.
+          </div>
+          <div class="text-secondary mt-1" style="font-size: 0.7rem;">
+            *Illustrative comparison for demonstration purposes. Original theatre ticket price remains untouched.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Customer Details & Simulated Payment System -->
+    <div class="col-lg-7 order-lg-1">
+      <div class="p-4 rounded-4 border border-secondary shadow-lg mb-4" style="background: rgba(18, 25, 40, 0.9);">
+        <!-- Customer Details -->
+        <h5 class="fw-bold text-white mb-3">
+          <i class="bi bi-person-badge text-danger me-2"></i>Contact Details for Ticket Confirmation
+        </h5>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label text-secondary small">Full Name</label>
+            <input type="text" class="form-control form-control-dark" id="customerName" value="{{ current_user.name if current_user else 'Sathish Kumar' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-secondary small">Email Address</label>
+            <input type="email" class="form-control form-control-dark" id="customerEmail" value="{{ current_user.email if current_user else 'demo@ticketmania.com' }}" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label text-secondary small">Phone Number</label>
+            <input type="tel" class="form-control form-control-dark" id="customerPhone" value="{{ current_user.phone if current_user and current_user.phone else '9876543210' }}" required>
+          </div>
+        </div>
+
+        <!-- Simulated Payment Options -->
+        <h5 class="fw-bold text-white mb-3">
+          <i class="bi bi-credit-card-2-front text-danger me-2"></i>Select Payment Method (Simulation)
+        </h5>
+
+        <!-- Payment Method Tabs -->
+        <div class="d-flex gap-2 mb-4">
+          <button type="button" class="btn btn-outline-danger payment-method-tab active flex-fill py-2" data-method="UPI" id="tabUPI">
+            <i class="bi bi-qr-code-scan me-1"></i> UPI / QR
+          </button>
+          <button type="button" class="btn btn-outline-secondary payment-method-tab flex-fill py-2" data-method="CARD" id="tabCard">
+            <i class="bi bi-credit-card me-1"></i> Debit / Credit Card
+          </button>
+          <button type="button" class="btn btn-outline-secondary payment-method-tab flex-fill py-2" data-method="NETBANKING" id="tabNetbanking">
+            <i class="bi bi-bank me-1"></i> Net Banking
+          </button>
+        </div>
+
+        <!-- Panel 1: UPI Simulator -->
+        <div class="payment-method-panel" id="panel-upi">
+          <div class="p-3 bg-dark rounded-3 border border-secondary text-center mb-3">
+            <div class="text-secondary small mb-2">Scan Demo QR code using any UPI app</div>
+            <!-- Simulated QR code representation -->
+            <div class="p-3 bg-white rounded-3 d-inline-block shadow mb-2">
+              <svg width="150" height="150" viewBox="0 0 150 150">
+                <rect width="150" height="150" fill="#ffffff" />
+                <!-- Corner 1 -->
+                <rect x="10" y="10" width="40" height="40" fill="#000000" />
+                <rect x="16" y="16" width="28" height="28" fill="#ffffff" />
+                <rect x="22" y="22" width="16" height="16" fill="#000000" />
+                <!-- Corner 2 -->
+                <rect x="100" y="10" width="40" height="40" fill="#000000" />
+                <rect x="106" y="16" width="28" height="28" fill="#ffffff" />
+                <rect x="112" y="22" width="16" height="16" fill="#000000" />
+                <!-- Corner 3 -->
+                <rect x="10" y="100" width="40" height="40" fill="#000000" />
+                <rect x="16" y="106" width="28" height="28" fill="#ffffff" />
+                <rect x="22" y="112" width="16" height="16" fill="#000000" />
+                <!-- Mock QR dots -->
+                <rect x="60" y="20" width="10" height="10" fill="#ff2a4b" />
+                <rect x="75" y="30" width="10" height="10" fill="#000000" />
+                <rect x="60" y="60" width="30" height="30" fill="#ff2a4b" />
+                <rect x="70" y="70" width="10" height="10" fill="#ffffff" />
+                <rect x="100" y="60" width="10" height="20" fill="#000000" />
+                <rect x="120" y="70" width="20" height="10" fill="#000000" />
+                <rect x="60" y="100" width="20" height="20" fill="#000000" />
+                <rect x="90" y="110" width="20" height="20" fill="#ff2a4b" />
+                <rect x="120" y="120" width="15" height="15" fill="#000000" />
+              </svg>
+            </div>
+            <div class="text-white fw-bold small">Demo QR Code (₹{{ summary.grand_total }})</div>
+            <div class="text-secondary" style="font-size: 0.72rem;">Accepts Google Pay, PhonePe, Paytm, BHIM</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label text-secondary small">Or enter Demo UPI ID</label>
+            <div class="input-group">
+              <input type="text" class="form-control form-control-dark" id="upiIdInput" value="sathish@okhdfcbank" placeholder="yourname@bank">
+              <span class="input-group-text bg-secondary border-secondary text-white">@demo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: Card Simulator -->
+        <div class="payment-method-panel d-none" id="panel-card">
+          <div class="p-3 bg-dark rounded-3 border border-secondary mb-3">
+            <div class="mb-3">
+              <label class="form-label text-secondary small">Card Number</label>
+              <div class="input-group">
+                <span class="input-group-text bg-secondary border-secondary text-white"><i class="bi bi-credit-card"></i></span>
+                <input type="text" class="form-control form-control-dark" id="cardNumber" value="4532 8912 3456 7890" maxlength="19" placeholder="4532 0000 0000 0000">
+              </div>
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label text-secondary small">Valid Thru</label>
+                <input type="text" class="form-control form-control-dark" id="cardExpiry" value="12/28" maxlength="5" placeholder="MM/YY">
+              </div>
+              <div class="col-6">
+                <label class="form-label text-secondary small">CVV</label>
+                <input type="password" class="form-control form-control-dark" id="cardCvv" value="123" maxlength="3" placeholder="123">
+              </div>
+            </div>
+            <div class="text-secondary" style="font-size: 0.72rem;">
+              <i class="bi bi-shield-check text-success me-1"></i>Demo interface only. No real banking details are collected or processed.
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 3: Net Banking Simulator -->
+        <div class="payment-method-panel d-none" id="panel-netbanking">
+          <div class="p-3 bg-dark rounded-3 border border-secondary mb-3">
+            <label class="form-label text-secondary small mb-2">Select Demo Bank</label>
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="form-check p-2 bg-black rounded border border-secondary">
+                  <input class="form-check-input ms-1" type="radio" name="demoBank" id="bankHdfc" checked>
+                  <label class="form-check-label text-white small ms-2" for="bankHdfc">HDFC Bank</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check p-2 bg-black rounded border border-secondary">
+                  <input class="form-check-input ms-1" type="radio" name="demoBank" id="bankSbi">
+                  <label class="form-check-label text-white small ms-2" for="bankSbi">State Bank of India</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check p-2 bg-black rounded border border-secondary">
+                  <input class="form-check-input ms-1" type="radio" name="demoBank" id="bankIcici">
+                  <label class="form-check-label text-white small ms-2" for="bankIcici">ICICI Bank</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check p-2 bg-black rounded border border-secondary">
+                  <input class="form-check-input ms-1" type="radio" name="demoBank" id="bankAxis">
+                  <label class="form-check-label text-white small ms-2" for="bankAxis">Axis Bank</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulator Test Controls -->
+        <div class="p-3 bg-dark rounded-3 border border-warning-subtle mb-4">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="simulateFailureToggle">
+            <label class="form-check-label text-warning small fw-bold" for="simulateFailureToggle">
+              <i class="bi bi-bug me-1"></i>Simulate Payment Failure (Test rejection & retry mechanism)
+            </label>
+          </div>
+          <div class="text-secondary mt-1" style="font-size: 0.72rem;">
+            When checked, the system will simulate a bank gateway timeout error so you can test failure recovery.
+          </div>
+        </div>
+
+        <!-- Pay Action Button -->
+        <button type="button" class="btn-primary-tm w-100 py-3 fs-5" id="submitPaymentBtn"
+                data-show-id="{{ show.id }}"
+                data-seats='{{ seats|tojson }}'>
+          <i class="bi bi-lock-fill"></i> Complete Demo Payment (₹{{ summary.grand_total }})
+        </button>
+
+        <div class="text-center text-secondary mt-2" style="font-size: 0.75rem;">
+          <i class="bi bi-shield-lock-fill text-success me-1"></i>Simulated 256-Bit SSL Demo Sandbox &bull; No Real Money Deducted
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Processing Spinner Modal -->
+<div class="modal fade" id="paymentProcessingModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-secondary text-center p-4">
+      <div class="spinner-border text-danger mb-3" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
+      <h5 class="fw-bold mb-1">Processing Demo Payment...</h5>
+      <p class="text-secondary small mb-0">Communicating with simulated banking gateway. Please do not close or refresh this window.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/payment.js') }}"></script>
+{% endblock %}

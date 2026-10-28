@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Select Seats — {{ show.movie.title }} at {{ show.theatre.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5 py-4">
+
+  <!-- Show Header Bar -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 p-3 rounded-3 border border-secondary" style="background: rgba(18, 25, 40, 0.85);">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <a href="{{ url_for('movie_details', slug=show.movie.slug) }}" class="text-secondary hover-white">
+          <i class="bi bi-chevron-left me-1"></i>Back
+        </a>
+        <span class="badge bg-danger">{{ show.format }}</span>
+        <span class="badge bg-secondary">{{ show.screen.screen_name }}</span>
+      </div>
+      <h3 class="fw-bold text-white mb-0">{{ show.movie.title }}</h3>
+      <div class="text-secondary small">
+        {{ show.theatre.name }} &bull; {{ show.theatre.area }} &bull; 
+        <strong class="text-white">{{ show.show_date }}</strong> at <strong class="text-white">{{ show.show_time }}</strong>
+      </div>
+    </div>
+
+    <!-- Pricing badges summary -->
+    <div class="d-flex align-items-center gap-2 mt-3 mt-md-0">
+      <span class="badge bg-dark border border-warning text-warning p-2">
+        VIP: ₹{{ show.price_vip|int }}
+      </span>
+      <span class="badge bg-dark border border-danger text-danger p-2">
+        Premium: ₹{{ show.price_premium|int }}
+      </span>
+      <span class="badge bg-dark border border-info text-info p-2">
+        Classic: ₹{{ show.price_normal|int }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="seating-legend">
+    <div class="legend-item">
+      <div class="legend-swatch legend-available"></div>
+      <span>Available</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch legend-selected"></div>
+      <span>Selected</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch legend-booked"></div>
+      <span>Sold / Unavailable</span>
+    </div>
+  </div>
+
+  <!-- Screen Visual -->
+  <div class="cinema-screen-container">
+    <div class="cinema-screen-curve"></div>
+    <div class="cinema-screen-label">Screen This Way</div>
+  </div>
+
+  <!-- Interactive Seating Layout -->
+  <div class="seating-layout" id="seatingGrid">
+    {% set current_tier = namespace(value='') %}
+
+    {% for r_conf in rows_config %}
+      {% if r_conf.tier != current_tier.value %}
+        {% set current_tier.value = r_conf.tier %}
+        <div class="seating-tier-header">
+          <span>{{ r_conf.tier }} — ₹{{ r_conf.price|int }}</span>
+        </div>
+      {% endif %}
+
+      <div class="seat-row" data-row="{{ r_conf.row }}">
+        <div class="row-label">{{ r_conf.row }}</div>
+
+        {% for col in range(1, total_cols + 1) %}
+          {% set seat_no = r_conf.row ~ col %}
+          {% set is_booked = seat_no in booked_seats %}
+
+          <div class="seat {% if is_booked %}booked{% else %}available{% endif %}"
+               data-seat-number="{{ seat_no }}"
+               data-tier="{{ r_conf.tier }}"
+               data-price="{{ r_conf.price }}"
+               id="seat-{{ seat_no }}"
+               title="Seat {{ seat_no }} ({{ r_conf.tier }} - ₹{{ r_conf.price|int }})">
+            {{ col }}
+          </div>
+        {% endfor %}
+
+        <div class="row-label">{{ r_conf.row }}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Floating Bottom Summary Drawer -->
+<div class="booking-summary-drawer" id="summaryDrawer">
+  <div class="container-fluid px-lg-5">
+    <div class="row align-items-center g-3">
+      <!-- Left: Seats and Tier info -->
+      <div class="col-md-5">
+        <div class="text-secondary small mb-1">
+          SELECTED SEATS (<span id="drawerTicketCount" class="fw-bold text-white">0</span>):
+        </div>
+        <div id="selectedSeatsBadges" class="d-flex flex-wrap align-items-center">
+          <!-- Dynamic seat badges inserted via JS -->
+        </div>
+      </div>
+
+      <!-- Center: Ticket Mania Fee USP & Breakdown -->
+      <div class="col-md-4">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="text-secondary small">Ticket Base: <strong id="drawerSubtotal" class="text-white">₹0</strong></span>
+          <span class="text-secondary small">+ Fee: <strong id="drawerFinalFee" class="text-white">₹0</strong></span>
+          <span id="drawerDiscountBadge" class="convenience-fee-pill">₹10 Discount</span>
+        </div>
+        <div class="text-success small fw-semibold">
+          <i class="bi bi-piggy-bank-fill me-1"></i>You save <span id="drawerSavings">₹0</span> vs standard ₹35/tkt platforms!
+        </div>
+      </div>
+
+      <!-- Right: Grand Total & Proceed Button -->
+      <div class="col-md-3 text-md-end">
+        <form action="{{ url_for('checkout') }}" method="POST">
+          <input type="hidden" name="show_id" value="{{ show.id }}">
+          <input type="hidden" name="seats_data" id="seatsDataInput" value="[]">
+
+          <div class="d-flex align-items-center justify-content-md-end gap-3">
+            <div class="text-end">
+              <div class="text-secondary" style="font-size: 0.72rem;">TOTAL PAYABLE</div>
+              <div class="fs-4 fw-bold text-white" id="drawerGrandTotal">₹0</div>
+            </div>
+            <button type="submit" class="btn-primary-tm px-4 py-2" id="proceedCheckoutBtn" disabled>
+              Checkout <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/seating.js') }}"></script>
+{% endblock %}

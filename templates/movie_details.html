@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}{{ movie.title }} ({{ movie.language }}) — Showtimes & Tickets in {{ city.name }}{% endblock %}
+
+{% block content %}
+<!-- Movie Backdrop Hero -->
+<div class="position-relative" style="background: linear-gradient(180deg, rgba(10,13,20,0.4) 0%, #0a0d14 100%), url('{{ movie.backdrop_url }}') center/cover; min-height: 380px;">
+  <div class="container-fluid px-lg-5 py-5 position-relative">
+    <div class="row align-items-center g-4">
+      <div class="col-md-3 col-lg-2 text-center text-md-start">
+        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="img-fluid rounded-3 shadow-lg border border-secondary" style="max-height: 320px; object-fit: cover;">
+      </div>
+      <div class="col-md-9 col-lg-10">
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <span class="badge bg-danger">{{ movie.language }}</span>
+          <span class="badge bg-secondary">{{ movie.rating }}</span>
+          <span class="badge bg-dark border border-secondary">{{ movie.genre }}</span>
+        </div>
+        <h1 class="display-5 fw-bold text-white mb-2">{{ movie.title }}</h1>
+        <div class="d-flex flex-wrap align-items-center gap-3 text-secondary mb-3">
+          <span class="text-warning fw-bold fs-5">
+            <i class="bi bi-star-fill"></i> {{ movie.user_rating }}<span class="text-secondary fs-6">/10</span>
+          </span>
+          <span class="text-secondary small">({{ "{:,}".format(movie.votes_count) }} votes)</span>
+          <span>&bull;</span>
+          <span><i class="bi bi-clock me-1"></i>{{ movie.duration_formatted }}</span>
+          <span>&bull;</span>
+          <span><i class="bi bi-calendar3 me-1"></i>{{ movie.release_date }}</span>
+        </div>
+        <p class="text-light col-lg-8 mb-3" style="font-size: 0.95rem; line-height: 1.6;">
+          {{ movie.synopsis }}
+        </p>
+        <div>
+          <a href="{{ movie.trailer_url }}" target="_blank" class="btn btn-outline-light btn-sm rounded-pill px-3">
+            <i class="bi bi-play-circle me-1"></i> Watch Official Trailer
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-lg-5 py-4">
+
+  <!-- Ticket Mania Savings Incentive Banner -->
+  <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-4 bg-dark border border-warning-subtle">
+    <div class="d-flex align-items-center gap-3">
+      <div class="fs-3 text-warning"><i class="bi bi-percent"></i></div>
+      <div>
+        <div class="text-white fw-bold">Ticket Mania Convenience Fee Discount Active!</div>
+        <div class="text-secondary small">Get ₹5 discount on odd ticket counts (1, 3, 5...) or ₹10 discount on even ticket counts (2, 4, 6...). Applied automatically at checkout.</div>
+      </div>
+    </div>
+    <span class="badge bg-success text-white px-3 py-2 fs-7 fw-bold">Save More per Booking</span>
+  </div>
+
+  <!-- Date Selection Tabs -->
+  <div class="d-flex align-items-center gap-2 mb-4 overflow-x-auto pb-2 border-bottom border-secondary">
+    <span class="text-secondary small fw-semibold me-2 d-none d-md-inline"><i class="bi bi-calendar-event me-1"></i>Date:</span>
+    {% for d in dates_list %}
+      <a href="{{ url_for('movie_details', slug=movie.slug, date=d.date_str) }}" 
+         class="btn btn-sm rounded-pill px-3 py-2 text-center {% if selected_date == d.date_str %}btn-danger text-white fw-bold shadow{% else %}btn-outline-secondary text-secondary{% endif %}"
+         style="min-width: 90px;">
+        <div class="small fw-bold">{{ d.day_name }}</div>
+        <div style="font-size: 0.72rem;">{{ d.display }}</div>
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Theatres & Showtimes in Current City -->
+  <div class="mb-5">
+    <h3 class="fw-bold text-white mb-4">
+      Theatres Screening {{ movie.title }} in {{ city.name }}
+    </h3>
+
+    {% if theatre_shows %}
+      <div class="d-flex flex-column gap-3">
+        {% for theatre, shows in theatre_shows.items() %}
+          <div class="p-4 rounded-3 border border-secondary" style="background: rgba(18, 25, 40, 0.75);">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 pb-3 border-bottom border-secondary gap-2">
+              <div>
+                <div class="d-flex align-items-center gap-2">
+                  <h4 class="text-white fw-bold mb-0">{{ theatre.name }}</h4>
+                  <span class="theatre-badge-dist"><i class="bi bi-geo-alt"></i> {{ theatre.distance_km }} km</span>
+                </div>
+                <div class="text-secondary small mt-1">
+                  <i class="bi bi-pin-map text-danger me-1"></i>{{ theatre.address }}
+                </div>
+              </div>
+
+              <!-- Amenities tags -->
+              <div class="d-flex flex-wrap gap-1">
+                {% for amenity in theatre.amenities.split(',') %}
+                  <span class="amenity-tag">{{ amenity.strip() }}</span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Showtimes List -->
+            <div class="d-flex flex-wrap align-items-center gap-3">
+              {% for show in shows %}
+                <a href="{{ url_for('seat_selection', show_id=show.id) }}" 
+                   class="showtime-pill" 
+                   id="showBtn-{{ show.id }}"
+                   title="Screen: {{ show.screen.screen_name }} | VIP: ₹{{ show.price_vip|int }} | Premium: ₹{{ show.price_premium|int }} | Classic: ₹{{ show.price_normal|int }}">
+                  <span class="time-text">{{ show.show_time }}</span>
+                  <span class="fmt-text">{{ show.format }}</span>
+                  <span class="text-secondary" style="font-size: 0.68rem;">From ₹{{ show.price_normal|int }}</span>
+                </a>
+              {% endfor %}
+            </div>
+            
+            <div class="mt-3 text-secondary small d-flex align-items-center gap-3">
+              <span><i class="bi bi-info-circle me-1"></i>Screen: {{ shows[0].screen.screen_type }}</span>
+              <span>&bull;</span>
+              <span>Cancellation Available</span>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-5 bg-dark rounded border border-secondary">
+        <i class="bi bi-calendar-x fs-1 text-secondary mb-2"></i>
+        <h5 class="text-white">No Shows Available on this Date</h5>
+        <p class="text-secondary small mb-3">Please select another date above or explore other movies running in {{ city.name }}.</p>
+        <a href="{{ url_for('movies') }}" class="btn btn-outline-danger btn-sm rounded-pill px-4">Browse All Movies</a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{{ theatre.name }}, {{ theatre.area }} — Shows & Tickets{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5 py-4">
+
+  <!-- Theatre Header Card -->
+  <div class="p-4 rounded-4 border border-secondary mb-4 shadow" style="background: rgba(18, 25, 40, 0.85);">
+    <div class="row align-items-center g-3">
+      <div class="col-md-8">
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-danger">Cinema Complex</span>
+          <span class="theatre-badge-dist"><i class="bi bi-geo-alt"></i> {{ theatre.distance_km }} km away</span>
+        </div>
+        <h2 class="fw-bold text-white mb-2">{{ theatre.name }}</h2>
+        <p class="text-secondary small mb-3">
+          <i class="bi bi-pin-map-fill text-danger me-1"></i>{{ theatre.address }}
+        </p>
+        <div class="d-flex flex-wrap gap-1">
+          {% for amenity in theatre.amenities.split(',') %}
+            <span class="amenity-tag">{{ amenity.strip() }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <div class="p-3 bg-dark rounded-3 border border-secondary d-inline-block text-start">
+          <div class="text-secondary small">Total Screens: <strong class="text-white">{{ theatre.total_screens }}</strong></div>
+          <div class="text-secondary small">Parking: <strong class="text-white">Available</strong></div>
+          <div class="text-secondary small">Ticket Mania Discount: <span class="text-success fw-bold">Active</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Date Selection Tabs -->
+  <div class="d-flex align-items-center gap-2 mb-4 overflow-x-auto pb-2 border-bottom border-secondary">
+    <span class="text-secondary small fw-semibold me-2"><i class="bi bi-calendar-event me-1"></i>Select Date:</span>
+    {% for d in dates_list %}
+      <a href="{{ url_for('theatre_details', theatre_id=theatre.id, date=d.date_str) }}" 
+         class="btn btn-sm rounded-pill px-3 py-2 text-center {% if selected_date == d.date_str %}btn-danger text-white fw-bold shadow{% else %}btn-outline-secondary text-secondary{% endif %}"
+         style="min-width: 90px;">
+        <div class="small fw-bold">{{ d.day_name }}</div>
+        <div style="font-size: 0.72rem;">{{ d.display }}</div>
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Movies & Shows playing at this theatre -->
+  <div class="mb-5">
+    <h4 class="fw-bold text-white mb-3">Currently Running Movies</h4>
+
+    {% if movie_shows %}
+      <div class="d-flex flex-column gap-3">
+        {% for movie, shows in movie_shows.items() %}
+          <div class="p-4 rounded-3 border border-secondary" style="background: rgba(18, 25, 40, 0.7);">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 pb-3 border-bottom border-secondary gap-2">
+              <div class="d-flex align-items-center gap-3">
+                <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="rounded shadow" style="width: 50px; height: 70px; object-fit: cover;">
+                <div>
+                  <a href="{{ url_for('movie_details', slug=movie.slug) }}" class="text-decoration-none">
+                    <h5 class="text-white fw-bold mb-1">{{ movie.title }}</h5>
+                  </a>
+                  <div class="text-secondary small">
+                    <span class="badge bg-secondary me-1">{{ movie.rating }}</span>
+                    <span>{{ movie.language }} &bull; {{ movie.genre }} &bull; {{ movie.duration_formatted }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Showtimes -->
+            <div class="d-flex flex-wrap align-items-center gap-3">
+              {% for show in shows %}
+                <a href="{{ url_for('seat_selection', show_id=show.id) }}" class="showtime-pill" id="theatreShowBtn-{{ show.id }}">
+                  <span class="time-text">{{ show.show_time }}</span>
+                  <span class="fmt-text">{{ show.format }}</span>
+                  <span class="text-secondary" style="font-size: 0.68rem;">From ₹{{ show.price_normal|int }}</span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-5 bg-dark rounded border border-secondary">
+        <i class="bi bi-calendar-x fs-1 text-secondary mb-2"></i>
+        <h5 class="text-white">No Shows Found</h5>
+        <p class="text-secondary small">There are no shows scheduled for {{ theatre.name }} on this date.</p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Ticket Mania — Location-Based Movie Ticket Booking{% endblock %}</title>
+  <meta name="description" content="Discover nearby theatres in Trichy, explore movies, check showtimes, and book movie tickets with Ticket Mania's customer-friendly convenience fee discounts.">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/seating.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Sticky Navbar -->
+  <nav class="tm-navbar navbar navbar-expand-lg">
+    <div class="container-fluid px-lg-5">
+      <!-- Brand -->
+      <a class="navbar-brand brand-logo" href="{{ url_for('index') }}" id="navBrandLogo">
+        <div class="brand-icon">
+          <i class="bi bi-ticket-perforated-fill"></i>
+        </div>
+        <span>Ticket<span class="brand-highlight">Mania</span></span>
+      </a>
+
+      <!-- Location Selector Trigger -->
+      <button class="location-btn ms-lg-3" data-bs-toggle="modal" data-bs-target="#locationModal" id="locationSelectorBtn">
+        <i class="bi bi-geo-alt-fill location-icon-pin"></i>
+        <span>{{ current_city.name if current_city else 'Tiruchirappalli (Trichy)' }}</span>
+        <i class="bi bi-chevron-down" style="font-size: 0.75rem;"></i>
+      </button>
+
+      <!-- Mobile Toggle -->
+      <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#tmNavbarCollapse">
+        <i class="bi bi-list fs-2"></i>
+      </button>
+
+      <!-- Nav Links & Search -->
+      <div class="collapse navbar-collapse" id="tmNavbarCollapse">
+        <!-- Quick Search Bar -->
+        <form class="d-flex mx-lg-auto my-2 my-lg-0 w-100" style="max-width: 380px;" action="{{ url_for('movies') }}" method="GET">
+          <div class="input-group">
+            <span class="input-group-text bg-dark border-secondary text-secondary">
+              <i class="bi bi-search"></i>
+            </span>
+            <input class="form-control form-control-dark border-secondary" type="search" name="q" placeholder="Search movies, genres, languages..." aria-label="Search" id="globalSearchInput">
+          </div>
+        </form>
+
+        <ul class="navbar-nav ms-auto align-items-lg-center">
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom {% if request.path == url_for('index') %}active{% endif %}" href="{{ url_for('index') }}" id="navHome">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom {% if request.path == url_for('movies') %}active{% endif %}" href="{{ url_for('movies') }}" id="navMovies">Movies</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom {% if request.path == url_for('theatres') %}active{% endif %}" href="{{ url_for('theatres') }}" id="navTheatres">Theatres</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom {% if request.path == url_for('offers') %}active{% endif %}" href="{{ url_for('offers') }}" id="navOffers">
+              Fee Savings <span class="usp-badge-nav">₹5-₹10 Off</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom {% if request.path == url_for('my_bookings') %}active{% endif %}" href="{{ url_for('my_bookings') }}" id="navMyBookings">My Bookings</a>
+          </li>
+
+          <!-- User Menu -->
+          <li class="nav-item ms-lg-2">
+            {% if current_user %}
+              <div class="dropdown">
+                <button class="btn btn-outline-light btn-sm dropdown-toggle rounded-pill px-3 py-1" type="button" data-bs-toggle="dropdown">
+                  <i class="bi bi-person-circle me-1"></i> {{ current_user.name.split()[0] }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
+                  <li class="dropdown-header text-muted">{{ current_user.email }}</li>
+                  <li><a class="dropdown-item" href="{{ url_for('my_bookings') }}"><i class="bi bi-ticket-detailed me-2"></i>My Bookings</a></li>
+                  {% if current_user.is_admin %}
+                    <li><hr class="dropdown-divider border-secondary"></li>
+                    <li><a class="dropdown-item text-warning" href="{{ url_for('admin_dashboard') }}"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</a></li>
+                  {% endif %}
+                  <li><hr class="dropdown-divider border-secondary"></li>
+                  <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                </ul>
+              </div>
+            {% else %}
+              <div class="d-flex align-items-center gap-2">
+                <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-light rounded-pill px-3 py-1" id="navLoginBtn">Login</a>
+                <a href="{{ url_for('register') }}" class="btn btn-sm btn-primary-tm py-1 px-3" id="navSignupBtn">Sign Up</a>
+              </div>
+            {% endif %}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages -->
+  <div class="container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'danger' and category != 'error' else 'danger' }} alert-dismissible fade show border-0 shadow" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Content -->
+  <main class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Location Selector Modal -->
+  <div class="modal fade" id="locationModal" tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark text-white border-secondary shadow-lg">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title fw-bold" id="locationModalLabel">
+            <i class="bi bi-geo-alt-fill text-danger me-2"></i>Select Your Location
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <!-- Search box -->
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-secondary border-secondary text-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control form-control-dark" id="cityModalSearch" placeholder="Search city or area...">
+          </div>
+
+          <!-- Geolocation Detector Button -->
+          <button class="btn btn-outline-info w-100 mb-4 py-2 d-flex align-items-center justify-content-center gap-2" id="detectLocationBtn">
+            <i class="bi bi-crosshair"></i> Detect My Current Location
+          </button>
+
+          <!-- Popular Cities Grid -->
+          <h6 class="text-uppercase text-secondary fs-7 fw-bold mb-3">Popular Cities</h6>
+          <div class="row g-2" id="citiesGridContainer">
+            {% for city in all_cities %}
+              <div class="col-6 col-md-4 city-grid-item" data-city-name="{{ city.name }}">
+                <a href="{{ url_for('set_city', slug=city.slug, next=request.path) }}" 
+                   class="btn w-100 text-start p-2 rounded-3 border {% if current_city and current_city.id == city.id %}btn-outline-danger border-danger{% else %}btn-outline-secondary border-secondary text-light{% endif %}"
+                   id="cityBtn-{{ city.slug }}">
+                  <div class="fw-semibold text-truncate">{{ city.name }}</div>
+                  <div class="text-secondary" style="font-size: 0.72rem;">
+                    {{ city.state }}
+                    {% if city.is_default %}<span class="badge bg-danger-subtle text-danger ms-1">Default</span>{% endif %}
+                  </div>
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="modal-footer border-secondary justify-content-between">
+          <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Default: Tiruchirappalli (Trichy), Tamil Nadu</small>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="tm-footer">
+    <div class="container px-lg-5">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="brand-logo mb-3">
+            <div class="brand-icon">
+              <i class="bi bi-ticket-perforated-fill"></i>
+            </div>
+            <span>Ticket<span class="brand-highlight">Mania</span></span>
+          </div>
+          <p class="text-secondary small mb-3">
+            Tamil Nadu's premier location-based movie ticketing discovery platform. Experience seamless seat reservations with our customer-first convenience fee discount system.
+          </p>
+          <div class="d-flex gap-2">
+            <span class="badge bg-dark border border-secondary text-secondary">Trichy Centric</span>
+            <span class="badge bg-dark border border-secondary text-secondary">₹5 - ₹10 Fee Off</span>
+            <span class="badge bg-dark border border-secondary text-secondary">Live Seat Map</span>
+          </div>
+        </div>
+        <div class="col-6 col-lg-2">
+          <h6 class="text-white fw-bold mb-3">Explore</h6>
+          <ul class="list-unstyled small">
+            <li class="mb-2"><a href="{{ url_for('movies') }}" class="text-secondary hover-white">Now Showing</a></li>
+            <li class="mb-2"><a href="{{ url_for('theatres') }}" class="text-secondary hover-white">Theatres in Trichy</a></li>
+            <li class="mb-2"><a href="{{ url_for('offers') }}" class="text-secondary hover-white">Convenience Fee USP</a></li>
+            <li class="mb-2"><a href="{{ url_for('my_bookings') }}" class="text-secondary hover-white">My Bookings</a></li>
+          </ul>
+        </div>
+        <div class="col-6 col-lg-3">
+          <h6 class="text-white fw-bold mb-3">Trichy Theatres</h6>
+          <ul class="list-unstyled small text-secondary">
+            <li class="mb-1">LA Cinema Maris Complex (Thillai Nagar)</li>
+            <li class="mb-1">Mega Star Cinemas (Cantonment)</li>
+            <li class="mb-1">Sona Mina Theatres (Karur Bypass)</li>
+            <li class="mb-1">Sri Venkatesha / Rohini (K.K. Nagar)</li>
+            <li class="mb-1">Cauvery Theatre (Srirangam)</li>
+          </ul>
+        </div>
+        <div class="col-lg-3">
+          <h6 class="text-white fw-bold mb-3">Demo Prototype Access</h6>
+          <div class="bg-dark p-3 rounded border border-secondary small mb-2">
+            <div class="text-light fw-semibold mb-1"><i class="bi bi-shield-lock me-1"></i>Pre-configured Accounts</div>
+            <div class="text-secondary">Customer: <code>demo@ticketmania.com</code> / <code>demo123</code></div>
+            <div class="text-secondary">Admin: <code>admin@ticketmania.com</code> / <code>admin123</code></div>
+          </div>
+          <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary btn-sm w-100">
+            <i class="bi bi-speedometer2 me-1"></i> Admin Dashboard
+          </a>
+        </div>
+      </div>
+
+      <!-- Prototype Disclaimer -->
+      <div class="demo-disclaimer-banner">
+        <strong><i class="bi bi-exclamation-triangle-fill me-1"></i> Demonstration Prototype Notice:</strong>
+        Ticket Mania is an interactive demonstration prototype. All movie schedules, seat allocations, payment gateways, and booking passes are simulated. No real payment is deducted, and demo tickets are not valid for admission at actual cinema halls.
+      </div>
+
+      <div class="border-top border-secondary mt-4 pt-3 d-flex flex-column flex-md-row justify-content-between align-items-center small text-secondary">
+        <div>&copy; {{ current_year }} Ticket Mania. All rights reserved.</div>
+        <div>Built with Flask, SQLite & Modern Vanilla CSS.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Chart.js for Admin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Custom JS -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket Mania — Movie Tickets in {{ current_city.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5 py-3">
+
+  <!-- ==========================================
+       HERO CAROUSEL
+       ========================================== -->
+  <section class="hero-section mb-5">
+    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+      <div class="carousel-indicators">
+        {% for movie in featured_movies %}
+          <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="{{ loop.index0 }}" {% if loop.first %}class="active" aria-current="true"{% endif %}></button>
+        {% endfor %}
+      </div>
+      <div class="carousel-inner">
+        {% for movie in featured_movies %}
+          <div class="carousel-item {% if loop.first %}active{% endif %}" data-bs-interval="6000">
+            <div class="hero-slide" style="background-image: url('{{ movie.backdrop_url }}');">
+              <div class="hero-overlay"></div>
+              <div class="hero-content">
+                <div class="hero-badge">
+                  <i class="bi bi-fire"></i> Trending in {{ current_city.name }}
+                </div>
+                <h1 class="hero-title">{{ movie.title }}</h1>
+                <div class="hero-meta">
+                  <span><i class="bi bi-star-fill text-warning me-1"></i>{{ movie.user_rating }}/10</span>
+                  <span>&bull;</span>
+                  <span>{{ movie.language }}</span>
+                  <span>&bull;</span>
+                  <span>{{ movie.genre }}</span>
+                  <span>&bull;</span>
+                  <span>{{ movie.duration_formatted }}</span>
+                  <span>&bull;</span>
+                  <span class="badge bg-secondary">{{ movie.rating }}</span>
+                </div>
+                <p class="hero-desc">{{ movie.synopsis }}</p>
+                <div class="d-flex align-items-center gap-3">
+                  <a href="{{ url_for('movie_details', slug=movie.slug) }}" class="btn-primary-tm" id="heroBookBtn-{{ movie.slug }}">
+                    <i class="bi bi-ticket-perforated"></i> Book Tickets
+                  </a>
+                  <a href="{{ movie.trailer_url }}" target="_blank" class="btn-secondary-tm">
+                    <i class="bi bi-play-circle"></i> Watch Trailer
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       TICKET MANIA USP: CONVENIENCE FEE DISCOUNT SYSTEM
+       ========================================== -->
+  <section class="usp-highlight-banner mb-5" id="feeCalculatorSection">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <div class="d-inline-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-danger text-white px-3 py-2 text-uppercase fs-7 fw-bold">Ticket Mania Exclusive</span>
+          <span class="discount-pill"><i class="bi bi-patch-check-fill"></i> Guaranteed Savings</span>
+        </div>
+        <h2 class="display-6 fw-bold text-white mb-2">Why Pay More for Booking Fees?</h2>
+        <p class="text-light mb-3" style="font-size: 1.05rem;">
+          Unlike conventional movie portals that levy hefty convenience charges (~₹35/ticket), <strong>Ticket Mania</strong> charges only a transparent <strong>₹20 base fee</strong> with instant booking discounts:
+        </p>
+        <div class="row g-2 mb-3">
+          <div class="col-sm-6">
+            <div class="p-3 rounded bg-dark border border-warning-subtle d-flex align-items-center gap-3">
+              <div class="fs-2 text-warning"><i class="bi bi-dice-3"></i></div>
+              <div>
+                <div class="fw-bold text-white">Odd Tickets (1, 3, 5, 7, 9...)</div>
+                <div class="text-warning small fw-semibold">₹5 Flat Discount on Total Fee</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="p-3 rounded bg-dark border border-success-subtle d-flex align-items-center gap-3">
+              <div class="fs-2 text-success"><i class="bi bi-dice-2"></i></div>
+              <div>
+                <div class="fw-bold text-white">Even Tickets (2, 4, 6, 8, 10...)</div>
+                <div class="text-success small fw-semibold">₹10 Flat Discount on Total Fee</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="text-secondary small">
+          <i class="bi bi-info-circle me-1"></i> Original theatre ticket price remains 100% untouched. Discounts apply directly to convenience fees.
+        </div>
+      </div>
+
+      <!-- Live Interactive Fee Calculator Widget -->
+      <div class="col-lg-5">
+        <div class="fee-calc-box shadow-lg">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-bold text-white"><i class="bi bi-calculator me-1"></i> Live Fee Savings Calculator</span>
+            <span id="calcDiscountBadge" class="badge bg-success">Even Ticket: ₹10 Off!</span>
+          </div>
+
+          <div class="mb-3">
+            <label for="ticketSlider" class="form-label d-flex justify-content-between text-secondary small">
+              <span>Select Number of Tickets:</span>
+              <strong class="text-white fs-6"><span id="calcTicketCount">2</span> Tickets</strong>
+            </label>
+            <input type="range" class="form-range" min="1" max="10" value="2" id="ticketSlider">
+            <div class="d-flex justify-content-between text-secondary" style="font-size: 0.7rem;">
+              <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span>
+            </div>
+          </div>
+
+          <!-- Price comparison breakdown -->
+          <div class="bg-dark p-3 rounded border border-secondary mb-3">
+            <div class="d-flex justify-content-between text-secondary small mb-1">
+              <span>Base Convenience Fee (₹20/tkt):</span>
+              <span class="text-white" id="calcBaseFee">₹40</span>
+            </div>
+            <div class="d-flex justify-content-between text-success small fw-bold mb-2">
+              <span>Ticket Mania Discount:</span>
+              <span id="calcDiscount">-₹10</span>
+            </div>
+            <div class="d-flex justify-content-between border-top border-secondary pt-2 fw-bold text-white">
+              <span>You Pay (Convenience Fee):</span>
+              <span class="text-danger fs-5" id="calcFinalFee">₹30</span>
+            </div>
+          </div>
+
+          <!-- Benchmark savings -->
+          <div class="d-flex justify-content-between align-items-center p-2 rounded bg-success-subtle text-success small border border-success">
+            <div>
+              <div class="fw-bold">Conventional Platforms (~₹35/tkt):</div>
+              <div class="text-muted text-decoration-line-through" id="calcConventionalFee">₹70</div>
+            </div>
+            <div class="text-end">
+              <span class="badge bg-success fs-6" id="calcSavings">Save ₹40</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       NOW SHOWING MOVIES IN TRICHY
+       ========================================== -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <h3 class="fw-bold text-white mb-1">Now Showing in {{ current_city.name }}</h3>
+        <p class="text-secondary small mb-0">Book verified movie tickets across nearby theatres with zero markup</p>
+      </div>
+      <a href="{{ url_for('movies', status='now_showing') }}" class="text-danger fw-semibold text-decoration-none small">
+        See All <i class="bi bi-chevron-right"></i>
+      </a>
+    </div>
+
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
+      {% for movie in now_showing_movies %}
+        <div class="col">
+          <div class="movie-card">
+            <a href="{{ url_for('movie_details', slug=movie.slug) }}" class="movie-poster-wrap">
+              <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="movie-poster" loading="lazy">
+              <div class="movie-rating-badge">
+                <i class="bi bi-star-fill text-warning"></i> {{ movie.user_rating }}
+              </div>
+            </a>
+            <div class="movie-info">
+              <div>
+                <a href="{{ url_for('movie_details', slug=movie.slug) }}">
+                  <h4 class="movie-title">{{ movie.title }}</h4>
+                </a>
+                <div class="movie-genre">{{ movie.language }} &bull; {{ movie.genre.split(',')[0] }}</div>
+              </div>
+              <a href="{{ url_for('movie_details', slug=movie.slug) }}" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-2 fw-semibold">
+                Book Tickets
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ==========================================
+       THEATRES IN CURRENT CITY (TRICHY BY DEFAULT)
+       ========================================== -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <h3 class="fw-bold text-white mb-1">
+          <i class="bi bi-building text-danger me-2"></i>Theatres in {{ current_city.name }}
+        </h3>
+        <p class="text-secondary small mb-0">Discover top cinema complexes, screens, and audio formats</p>
+      </div>
+      <a href="{{ url_for('theatres') }}" class="text-danger fw-semibold text-decoration-none small">
+        View All Theatres <i class="bi bi-chevron-right"></i>
+      </a>
+    </div>
+
+    <div class="row g-4">
+      {% for theatre in theatres %}
+        <div class="col-md-6 col-lg-4">
+          <div class="theatre-card">
+            <div>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="fw-bold text-white mb-0">{{ theatre.name }}</h5>
+                <span class="theatre-badge-dist"><i class="bi bi-geo-alt"></i> {{ theatre.distance_km }} km</span>
+              </div>
+              <div class="text-secondary small mb-3">
+                <i class="bi bi-pin-map-fill text-danger me-1"></i>{{ theatre.area }}
+              </div>
+              
+              <!-- Amenities -->
+              <div class="d-flex flex-wrap gap-1 mb-3">
+                {% for amenity in theatre.amenities.split(',') %}
+                  <span class="amenity-tag">{{ amenity.strip() }}</span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between border-top border-secondary pt-3 mt-2">
+              <span class="text-secondary small">
+                <i class="bi bi-projector me-1"></i>{{ theatre.total_screens }} Screen(s)
+              </span>
+              <a href="{{ url_for('theatre_details', theatre_id=theatre.id) }}" class="btn btn-sm btn-outline-light rounded-pill px-3">
+                Check Shows <i class="bi bi-arrow-right ms-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ==========================================
+       COMING SOON / UPCOMING
+       ========================================== -->
+  {% if upcoming_movies %}
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <h3 class="fw-bold text-white mb-1">Coming Soon</h3>
+        <p class="text-secondary small mb-0">Anticipated big releases hitting the big screen soon</p>
+      </div>
+      <a href="{{ url_for('movies', status='upcoming') }}" class="text-danger fw-semibold text-decoration-none small">
+        Explore Upcoming <i class="bi bi-chevron-right"></i>
+      </a>
+    </div>
+
+    <div class="row row-cols-2 row-cols-md-4 g-4">
+      {% for movie in upcoming_movies %}
+        <div class="col">
+          <div class="movie-card opacity-75">
+            <div class="movie-poster-wrap">
+              <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="movie-poster">
+              <span class="badge bg-danger position-absolute top-0 start-0 m-2">Releasing {{ movie.release_date }}</span>
+            </div>
+            <div class="movie-info">
+              <h4 class="movie-title">{{ movie.title }}</h4>
+              <div class="movie-genre">{{ movie.language }} &bull; {{ movie.genre }}</div>
+              <button class="btn btn-sm btn-outline-secondary w-100 rounded-pill py-2" disabled>
+                Releasing Soon
+              </button>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Shows & Showtimes — Admin | Ticket Mania{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5 py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('admin_dashboard') }}" class="text-secondary hover-white"><i class="bi bi-chevron-left me-1"></i>Dashboard</a>
+        <span class="text-secondary">/</span>
+        <h3 class="fw-bold text-white mb-0">Show Scheduling & Ticket Pricing</h3>
+      </div>
+      <p class="text-secondary small mb-0">Schedule screenings, define formats, and set VIP / Premium / Classic tier prices</p>
+    </div>
+    <button class="btn-primary-tm btn-sm py-2 px-3" data-bs-toggle="modal" data-bs-target="#addShowModal">
+      <i class="bi bi-plus-lg me-1"></i> Schedule Show
+    </button>
+  </div>
+
+  <!-- Shows Table -->
+  <div class="p-4 rounded-4 bg-dark border border-secondary shadow">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle border-secondary mb-0 small">
+        <thead class="text-secondary text-uppercase" style="font-size: 0.72rem;">
+          <tr>
+            <th>Date & Time</th>
+            <th>Movie</th>
+            <th>Theatre & Screen</th>
+            <th>Format</th>
+            <th>Pricing Tiers (VIP / Prem / Norm)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in shows %}
+            <tr>
+              <td>
+                <div class="fw-bold text-white">{{ s.show_date }}</div>
+                <div class="text-danger fw-semibold">{{ s.show_time }}</div>
+              </td>
+              <td>
+                <div class="fw-bold text-white">{{ s.movie.title }}</div>
+                <div class="text-secondary" style="font-size: 0.7rem;">{{ s.movie.language }}</div>
+              </td>
+              <td>
+                <div class="text-light">{{ s.theatre.name }}</div>
+                <div class="text-secondary" style="font-size: 0.7rem;">{{ s.screen.screen_name }}</div>
+              </td>
+              <td><span class="badge bg-secondary">{{ s.format }}</span></td>
+              <td>
+                <span class="badge bg-dark border border-warning text-warning">₹{{ s.price_vip|int }}</span>
+                <span class="badge bg-dark border border-danger text-danger">₹{{ s.price_premium|int }}</span>
+                <span class="badge bg-dark border border-info text-info">₹{{ s.price_normal|int }}</span>
+              </td>
+              <td>
+                <a href="{{ url_for('admin_seat_editor', show_id=s.id) }}" class="btn btn-outline-warning btn-sm rounded-pill px-3 py-1" style="font-size: 0.75rem;">
+                  <i class="bi bi-grid-3x3 me-1"></i> Manage Seats
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Schedule Show Modal -->
+<div class="modal fade" id="addShowModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-bold">Schedule Movie Screening</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label text-secondary small">Movie</label>
+            <select name="movie_id" class="form-select form-control-dark" required>
+              {% for m in movies %}
+                <option value="{{ m.id }}">{{ m.title }} ({{ m.language }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-secondary small">Theatre</label>
+            <select name="theatre_id" class="form-select form-control-dark" required>
+              {% for t in theatres %}
+                <option value="{{ t.id }}">{{ t.name }} ({{ t.city.name }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-secondary small">Screen</label>
+            <select name="screen_id" class="form-select form-control-dark" required>
+              {% for scr in screens %}
+                <option value="{{ scr.id }}">{{ scr.theatre.name }} — {{ scr.screen_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label text-secondary small">Show Date</label>
+              <input type="date" name="show_date" value="{{ now_date }}" class="form-control form-control-dark" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-secondary small">Show Time</label>
+              <input type="text" name="show_time" value="06:30 PM" class="form-control form-control-dark" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-secondary small">Audio / Projection Format</label>
+            <select name="format" class="form-select form-control-dark">
+              <option value="2D">2D Digital</option>
+              <option value="Dolby Atmos" selected>Dolby Atmos</option>
+              <option value="Dolby Atmos 4K">Dolby Atmos 4K Laser</option>
+              <option value="3D">3D Digital</option>
+              <option value="IMAX 2D">IMAX 2D</option>
+            </select>
+          </div>
+          <div class="row g-2">
+            <div class="col-4">
+              <label class="form-label text-secondary small">VIP (₹)</label>
+              <input type="number" name="price_vip" value="220" class="form-control form-control-dark" required>
+            </div>
+            <div class="col-4">
+              <label class="form-label text-secondary small">Premium (₹)</label>
+              <input type="number" name="price_premium" value="160" class="form-control form-control-dark" required>
+            </div>
+            <div class="col-4">
+              <label class="form-label text-secondary small">Classic (₹)</label>
+              <input type="number" name="price_normal" value="100" class="form-control form-control-dark" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-primary-tm btn-sm px-3">Schedule Show</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

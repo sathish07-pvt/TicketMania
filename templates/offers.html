@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Convenience Fee Discounts & Pricing — Ticket Mania USP{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 960px;">
+
+  <!-- Hero Header -->
+  <div class="text-center mb-5">
+    <div class="d-inline-flex align-items-center gap-2 mb-3">
+      <span class="badge bg-danger text-white px-3 py-2 text-uppercase fs-7 fw-bold">Ticket Mania USP</span>
+      <span class="discount-pill"><i class="bi bi-patch-check-fill"></i> Fair & Transparent</span>
+    </div>
+    <h1 class="display-5 fw-bold text-white mb-2">Our Customer-Friendly Convenience Fee System</h1>
+    <p class="text-secondary col-lg-8 mx-auto" style="font-size: 1.1rem;">
+      Unlike conventional movie ticketing platforms that charge steep booking fees (~₹35 per ticket), Ticket Mania provides lower base fees and automated tiered discounts based on the number of tickets you book.
+    </p>
+  </div>
+
+  <!-- Key Principles Grid -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="p-4 rounded-4 bg-dark border border-secondary h-100">
+        <div class="fs-1 text-danger mb-2"><i class="bi bi-wallet2"></i></div>
+        <h5 class="fw-bold text-white mb-2">Transparent ₹20 Base Fee</h5>
+        <p class="text-secondary small mb-0">
+          Our base fee is strictly ₹20 per ticket before discounts. We believe in clear, honest pricing without surprise fees at final checkout.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="p-4 rounded-4 bg-dark border border-secondary h-100">
+        <div class="fs-1 text-warning mb-2"><i class="bi bi-dice-3"></i></div>
+        <h5 class="fw-bold text-white mb-2">Odd Ticket Count: ₹5 Off</h5>
+        <p class="text-secondary small mb-0">
+          Booking 1, 3, 5, 7, or 9 tickets? You receive an automated ₹5 flat discount on your total convenience fee.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="p-4 rounded-4 bg-dark border border-secondary h-100">
+        <div class="fs-1 text-success mb-2"><i class="bi bi-dice-2"></i></div>
+        <h5 class="fw-bold text-white mb-2">Even Ticket Count: ₹10 Off</h5>
+        <p class="text-secondary small mb-0">
+          Booking 2, 4, 6, 8, or 10 tickets for you and your partner, friends or family? Enjoy a ₹10 flat discount on your total convenience fee.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- The Exact Pricing Table (As specified in Section 6) -->
+  <div class="p-4 rounded-4 bg-dark border border-secondary shadow mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h4 class="fw-bold text-white mb-1"><i class="bi bi-table text-danger me-2"></i>Standard Pricing & Discount Table</h4>
+        <p class="text-secondary small mb-0">Exact breakdown of convenience fees and savings for 1 to 10 tickets</p>
+      </div>
+      <span class="badge bg-secondary">Official Formula</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-dark table-hover table-bordered border-secondary align-middle text-center mb-0">
+        <thead class="table-secondary text-dark text-uppercase small">
+          <tr>
+            <th>Number of Tickets (N)</th>
+            <th>Base Fee (₹20 &times; N)</th>
+            <th>Ticket Mania Discount</th>
+            <th>Final Fee Payable</th>
+            <th>Standard Fee (~₹35/tkt)</th>
+            <th>Your Savings</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for n in range(1, 11) %}
+            {% set is_odd = (n % 2 != 0) %}
+            {% set base = 20 * n %}
+            {% set discount = 5 if is_odd else 10 %}
+            {% set final = base - discount %}
+            {% set conv = 35 * n %}
+            {% set savings = conv - final %}
+            <tr>
+              <td class="fw-bold text-white">{{ n }} ticket{{ 's' if n > 1 else '' }}</td>
+              <td class="text-secondary">₹{{ base }}</td>
+              <td>
+                <span class="badge {% if is_odd %}bg-warning-subtle text-warning{% else %}bg-success-subtle text-success{% endif %}">
+                  -₹{{ discount }} ({{ 'Odd' if is_odd else 'Even' }})
+                </span>
+              </td>
+              <td class="fw-bold text-danger fs-6">₹{{ final }}</td>
+              <td class="text-secondary text-decoration-line-through">₹{{ conv }}</td>
+              <td class="text-success fw-bold">+₹{{ savings }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="text-secondary small mt-3">
+      <i class="bi bi-info-circle me-1"></i> Note: The discount applies strictly to the convenience fee once per booking and never alters the original theatre ticket price.
+    </div>
+  </div>
+
+  <!-- Interactive Fee Calculator Widget -->
+  <div class="usp-highlight-banner mb-5">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-6">
+        <h3 class="fw-bold text-white mb-2">Test with the Live Slider</h3>
+        <p class="text-secondary mb-3">
+          Drag the slider to see how your booking fee is calculated in real time under the Ticket Mania discount system.
+        </p>
+        <div class="p-3 bg-dark rounded border border-secondary small text-light">
+          <strong>Pricing Formula:</strong><br>
+          <code>Total Convenience Fee = (₹20 &times; N) - (N % 2 &ne; 0 ? ₹5 : ₹10)</code>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="fee-calc-box shadow">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="fw-bold text-white">Select Tickets:</span>
+            <span class="badge bg-danger fs-6"><span id="calcTicketCount">2</span> Tickets</span>
+          </div>
+          <input type="range" class="form-range mb-3" min="1" max="10" value="2" id="ticketSlider">
+
+          <div class="d-flex justify-content-between text-secondary small mb-1">
+            <span>Base Convenience Fee:</span>
+            <span class="text-white" id="calcBaseFee">₹40</span>
+          </div>
+          <div class="d-flex justify-content-between text-success small fw-bold mb-2">
+            <span>Discount Applied:</span>
+            <span id="calcDiscount">-₹10</span>
+          </div>
+          <div class="d-flex justify-content-between border-top border-secondary pt-2 fw-bold text-white mb-2">
+            <span>Net Fee:</span>
+            <span class="text-danger fs-5" id="calcFinalFee">₹30</span>
+          </div>
+          <div class="p-2 rounded bg-success-subtle text-success small d-flex justify-content-between align-items-center">
+            <span>Savings vs Conventional Platform (~₹35/tkt):</span>
+            <span class="badge bg-success" id="calcSavings">Save ₹40</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="p-4 rounded-4 bg-dark border border-secondary">
+    <h4 class="fw-bold text-white mb-4"><i class="bi bi-question-circle text-danger me-2"></i>Frequently Asked Questions</h4>
+    
+    <div class="mb-3">
+      <h6 class="text-white fw-bold">Does the discount reduce the theatre's original ticket price?</h6>
+      <p class="text-secondary small">
+        No. The original theatre ticket price is 100% remitted to the cinema exhibitor. The discount applies strictly to Ticket Mania's convenience fee.
+      </p>
+    </div>
+
+    <div class="mb-3">
+      <h6 class="text-white fw-bold">Is the discount applied once per ticket or once per booking?</h6>
+      <p class="text-secondary small">
+        The discount is applied once per entire booking (₹5 for odd total tickets, ₹10 for even total tickets).
+      </p>
+    </div>
+
+    <div>
+      <h6 class="text-white fw-bold">What happens if I cancel a simulated booking?</h6>
+      <p class="text-secondary small mb-0">
+        Under our prototype demo rules, 100% of the theatre ticket price is refunded, the booking is marked cancelled, and the seats are instantly released back to the hall.
+      </p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

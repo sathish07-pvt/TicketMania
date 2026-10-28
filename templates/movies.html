@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Movies in {{ current_city.name }} — Ticket Mania{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5 py-4">
+
+  <!-- Header with search & filters -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold text-white mb-1">
+        {% if selected_status == 'upcoming' %}Upcoming Movies{% else %}Movies in {{ current_city.name }}{% endif %}
+      </h2>
+      <p class="text-secondary small mb-0">
+        {% if search_query %}Showing search results for "<span class="text-white">{{ search_query }}</span>"{% else %}Explore currently running films and upcoming releases{% endif %}
+      </p>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="btn-group p-1 bg-dark rounded-pill border border-secondary">
+      <a href="{{ url_for('movies', status='now_showing', language=selected_language) }}" 
+         class="btn btn-sm rounded-pill px-3 {% if selected_status != 'upcoming' %}btn-danger text-white{% else %}text-secondary{% endif %}">
+        Now Showing
+      </a>
+      <a href="{{ url_for('movies', status='upcoming', language=selected_language) }}" 
+         class="btn btn-sm rounded-pill px-3 {% if selected_status == 'upcoming' %}btn-danger text-white{% else %}text-secondary{% endif %}">
+        Coming Soon
+      </a>
+    </div>
+  </div>
+
+  <!-- Language Filter Pills -->
+  <div class="d-flex flex-wrap gap-2 mb-4 pb-2 border-bottom border-secondary">
+    <a href="{{ url_for('movies', status=selected_status) }}" 
+       class="btn btn-sm rounded-pill px-3 {% if not selected_language %}btn-light text-dark fw-bold{% else %}btn-outline-secondary text-secondary{% endif %}">
+      All Languages
+    </a>
+    {% for lang in ['Tamil', 'Telugu', 'English', 'Hindi', 'Malayalam'] %}
+      <a href="{{ url_for('movies', status=selected_status, language=lang) }}" 
+         class="btn btn-sm rounded-pill px-3 {% if selected_language == lang %}btn-danger text-white fw-bold{% else %}btn-outline-secondary text-secondary{% endif %}">
+        {{ lang }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Movies Grid -->
+  {% if movies %}
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
+      {% for movie in movies %}
+        <div class="col">
+          <div class="movie-card">
+            <a href="{{ url_for('movie_details', slug=movie.slug) }}" class="movie-poster-wrap">
+              <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="movie-poster" loading="lazy">
+              {% if movie.is_now_showing %}
+                <div class="movie-rating-badge">
+                  <i class="bi bi-star-fill text-warning"></i> {{ movie.user_rating }}
+                </div>
+              {% else %}
+                <span class="badge bg-danger position-absolute top-0 start-0 m-2">{{ movie.release_date }}</span>
+              {% endif %}
+            </a>
+            <div class="movie-info">
+              <div>
+                <a href="{{ url_for('movie_details', slug=movie.slug) }}">
+                  <h4 class="movie-title">{{ movie.title }}</h4>
+                </a>
+                <div class="movie-genre">{{ movie.language }} &bull; {{ movie.genre }}</div>
+                <div class="text-secondary small mb-2"><i class="bi bi-clock me-1"></i>{{ movie.duration_formatted }}</div>
+              </div>
+
+              {% if movie.is_now_showing %}
+                <a href="{{ url_for('movie_details', slug=movie.slug) }}" class="btn btn-sm btn-outline-danger w-100 rounded-pill py-2 fw-semibold">
+                  Book Tickets
+                </a>
+              {% else %}
+                <button class="btn btn-sm btn-outline-secondary w-100 rounded-pill py-2" disabled>
+                  Releasing {{ movie.release_date }}
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-5">
+      <div class="fs-1 text-secondary mb-3"><i class="bi bi-film"></i></div>
+      <h4 class="text-white">No Movies Found</h4>
+      <p class="text-secondary small">No movies currently match your filter criteria. Try selecting another language or clear search.</p>
+      <a href="{{ url_for('movies') }}" class="btn btn-outline-danger btn-sm rounded-pill px-4">Reset Filters</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

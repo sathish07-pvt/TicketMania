@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Confirmed — {{ booking.booking_code }} | Ticket Mania{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 820px;">
+
+  <!-- Success Header -->
+  <div class="text-center mb-4">
+    <div class="d-inline-flex align-items-center justify-content-center bg-success text-white rounded-circle shadow mb-3" style="width: 64px; height: 64px;">
+      <i class="bi bi-check-lg fs-1"></i>
+    </div>
+    <h2 class="fw-bold text-white mb-1">Booking Confirmed!</h2>
+    <p class="text-secondary small">
+      Your simulated ticket has been booked successfully. A confirmation receipt was generated for reference.
+    </p>
+  </div>
+
+  <!-- Digital Cinema Ticket -->
+  <div class="cinema-ticket mb-4" id="printableTicket">
+    <!-- Ticket Header -->
+    <div class="ticket-header">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <div class="brand-icon">
+            <i class="bi bi-ticket-perforated-fill"></i>
+          </div>
+          <div>
+            <div class="fw-bold text-white fs-5">Ticket<span class="text-danger">Mania</span> Digital Pass</div>
+            <div class="text-secondary" style="font-size: 0.75rem;">Verified Prototype Demonstration Ticket</div>
+          </div>
+        </div>
+        <div class="text-md-end">
+          <div class="text-secondary" style="font-size: 0.72rem;">BOOKING ID</div>
+          <div class="fs-5 fw-bold text-warning font-monospace">{{ booking.booking_code }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Perforation line with circular punch cutouts -->
+    <div class="ticket-perforation"></div>
+
+    <!-- Ticket Body -->
+    <div class="ticket-body">
+      <div class="row g-4 align-items-center">
+        <!-- Poster & Title -->
+        <div class="col-md-3 text-center text-md-start">
+          <img src="{{ booking.show.movie.poster_url }}" alt="{{ booking.show.movie.title }}" class="img-fluid rounded-3 shadow border border-secondary" style="max-height: 180px; object-fit: cover;">
+        </div>
+
+        <div class="col-md-6">
+          <h3 class="fw-bold text-white mb-1">{{ booking.show.movie.title }}</h3>
+          <div class="text-secondary small mb-3">
+            <span class="badge bg-danger me-1">{{ booking.show.movie.language }}</span>
+            <span class="badge bg-secondary me-1">{{ booking.show.format }}</span>
+            <span>{{ booking.show.movie.genre }}</span>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <div class="text-secondary small">THEATRE</div>
+              <div class="text-white fw-semibold small">{{ booking.show.theatre.name }}</div>
+              <div class="text-secondary" style="font-size: 0.72rem;">{{ booking.show.theatre.area }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-secondary small">SCREEN</div>
+              <div class="text-white fw-semibold small">{{ booking.show.screen.screen_name }}</div>
+              <div class="text-secondary" style="font-size: 0.72rem;">{{ booking.show.screen.screen_type }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-secondary small">DATE & TIME</div>
+              <div class="text-white fw-semibold small">{{ booking.show.show_date }}</div>
+              <div class="text-danger fw-bold small">{{ booking.show.show_time }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-secondary small">SEATS ({{ booking.ticket_count }})</div>
+              <div class="text-white fw-bold small">
+                {% for s in booking.seats %}{{ s.seat_number }}{% if not loop.last %}, {% endif %}{% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulated Gate QR code -->
+        <div class="col-md-3 text-center border-start-md border-secondary pt-3 pt-md-0">
+          <div class="p-2 bg-white rounded-3 d-inline-block shadow mb-2">
+            <!-- Simulated QR code representation -->
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <rect width="110" height="110" fill="#ffffff" />
+              <rect x="5" y="5" width="30" height="30" fill="#000000" />
+              <rect x="10" y="10" width="20" height="20" fill="#ffffff" />
+              <rect x="15" y="15" width="10" height="10" fill="#000000" />
+              <rect x="75" y="5" width="30" height="30" fill="#000000" />
+              <rect x="80" y="10" width="20" height="20" fill="#ffffff" />
+              <rect x="85" y="15" width="10" height="10" fill="#000000" />
+              <rect x="5" y="75" width="30" height="30" fill="#000000" />
+              <rect x="10" y="80" width="20" height="20" fill="#ffffff" />
+              <rect x="15" y="85" width="10" height="10" fill="#000000" />
+              <!-- Middle demo blocks -->
+              <rect x="45" y="15" width="15" height="15" fill="#ff2a4b" />
+              <rect x="45" y="45" width="20" height="20" fill="#000000" />
+              <rect x="75" y="45" width="15" height="15" fill="#ff2a4b" />
+              <rect x="45" y="75" width="15" height="15" fill="#000000" />
+              <rect x="75" y="75" width="20" height="20" fill="#000000" />
+            </svg>
+          </div>
+          <div class="text-secondary font-monospace" style="font-size: 0.65rem;">SCAN AT ENTRY GATE</div>
+        </div>
+      </div>
+
+      <!-- Financial Summary & Savings -->
+      <div class="border-top border-secondary pt-3 mt-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <div class="text-secondary small">
+          Booked for: <strong class="text-white">{{ booking.customer_name }}</strong> ({{ booking.customer_phone }}) &bull; Paid via <strong class="text-white">{{ booking.payment_method }}</strong>
+        </div>
+        <div class="text-md-end">
+          <span class="badge bg-success-subtle text-success me-2">Saved ₹{{ booking.discount_amount|int }} with Ticket Mania</span>
+          <span class="text-secondary small">Total Paid:</span>
+          <span class="text-white fw-bold fs-5 ms-1">₹{{ booking.total_amount }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="d-flex flex-wrap justify-content-center gap-3">
+    <button type="button" class="btn btn-outline-light rounded-pill px-4" onclick="window.print()">
+      <i class="bi bi-printer me-1"></i> Print / Save PDF
+    </button>
+    <a href="{{ url_for('my_bookings') }}" class="btn btn-primary-tm rounded-pill px-4">
+      <i class="bi bi-ticket-detailed me-1"></i> View in My Bookings
+    </a>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary-tm rounded-pill px-4">
+      <i class="bi bi-house me-1"></i> Return to Home
+    </a>
+  </div>
+
+  <!-- Prototype Notice -->
+  <div class="demo-disclaimer-banner mt-4">
+    <i class="bi bi-info-circle me-1"></i>
+    <strong>Prototype Notice:</strong> This is an illustrative demonstration booking. No actual seats have been reserved at the physical cinema hall, and this pass cannot be redeemed for theatre entry.
+  </div>
+
+</div>
+{% endblock %}

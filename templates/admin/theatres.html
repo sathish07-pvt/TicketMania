@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Theatres — Admin | Ticket Mania{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5 py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('admin_dashboard') }}" class="text-secondary hover-white"><i class="bi bi-chevron-left me-1"></i>Dashboard</a>
+        <span class="text-secondary">/</span>
+        <h3 class="fw-bold text-white mb-0">Theatre Management</h3>
+      </div>
+      <p class="text-secondary small mb-0">Add, edit and monitor theatres in Trichy and other cities</p>
+    </div>
+    <button class="btn-primary-tm btn-sm py-2 px-3" data-bs-toggle="modal" data-bs-target="#addTheatreModal">
+      <i class="bi bi-plus-lg me-1"></i> Add New Theatre
+    </button>
+  </div>
+
+  <!-- Theatres Table -->
+  <div class="p-4 rounded-4 bg-dark border border-secondary shadow">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle border-secondary mb-0 small">
+        <thead class="text-secondary text-uppercase" style="font-size: 0.72rem;">
+          <tr>
+            <th>ID</th>
+            <th>Theatre Name</th>
+            <th>City</th>
+            <th>Area & Address</th>
+            <th>Distance</th>
+            <th>Screens</th>
+            <th>Amenities</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in theatres %}
+            <tr>
+              <td class="text-secondary">{{ t.id }}</td>
+              <td class="fw-bold text-white">{{ t.name }}</td>
+              <td><span class="badge bg-secondary">{{ t.city.name }}</span></td>
+              <td>
+                <div class="text-light">{{ t.area }}</div>
+                <div class="text-secondary" style="font-size: 0.7rem;">{{ t.address }}</div>
+              </td>
+              <td><span class="theatre-badge-dist">{{ t.distance_km }} km</span></td>
+              <td>{{ t.total_screens }} screen(s)</td>
+              <td>
+                <div class="text-secondary text-truncate" style="max-width: 250px;">{{ t.amenities }}</div>
+              </td>
+              <td>
+                {% if t.is_active %}
+                  <span class="badge bg-success-subtle text-success">Active</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger">Inactive</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Theatre Modal -->
+<div class="modal fade" id="addTheatreModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title fw-bold">Add New Cinema Hall / Theatre</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label text-secondary small">Theatre Name</label>
+            <input type="text" name="name" class="form-control form-control-dark" placeholder="e.g. Rohini Silver Screens" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-secondary small">City</label>
+            <select name="city_id" class="form-select form-control-dark" required>
+              {% for c in cities %}
+                <option value="{{ c.id }}" {% if c.is_default %}selected{% endif %}>{{ c.name }} ({{ c.state }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-secondary small">Area / Neighbourhood</label>
+            <input type="text" name="area" class="form-control form-control-dark" placeholder="e.g. Thillai Nagar, Trichy" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-secondary small">Full Address</label>
+            <input type="text" name="address" class="form-control form-control-dark" placeholder="No. 12, Main Road..." required>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label text-secondary small">Distance from City Center (km)</label>
+              <input type="number" step="0.1" name="distance_km" class="form-control form-control-dark" value="2.5" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-secondary small">Amenities</label>
+              <input type="text" name="amenities" class="form-control form-control-dark" value="Dolby Atmos, 4K Laser, Food Court">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn-primary-tm btn-sm px-3">Save Theatre</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

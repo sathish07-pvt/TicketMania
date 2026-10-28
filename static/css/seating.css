@@ -1,0 +1,235 @@
+/* ==========================================================================
+   Interactive Cinema Seating Styles — Ticket Mania
+   Curved Screen, Row Tiers, Seat Glows, Floating Drawer
+   ========================================================================== */
+
+.cinema-screen-container {
+  text-align: center;
+  margin: 1.5rem 0 3.5rem;
+  perspective: 400px;
+}
+
+.cinema-screen-curve {
+  height: 14px;
+  width: 75%;
+  max-width: 680px;
+  margin: 0 auto 12px;
+  background: linear-gradient(180deg, rgba(255, 42, 75, 0.9) 0%, rgba(255, 42, 75, 0.1) 100%);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  box-shadow: 0 -8px 24px rgba(255, 42, 75, 0.6);
+  transform: rotateX(-15deg);
+}
+
+.cinema-screen-label {
+  font-size: 0.82rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+/* Seating Grid Container */
+.seating-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  user-select: none;
+  overflow-x: auto;
+  padding-bottom: 2rem;
+}
+
+.seating-tier-header {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 1.25rem;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 680px;
+}
+
+.seating-tier-header::before,
+.seating-tier-header::after {
+  content: '';
+  flex-grow: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-label {
+  width: 24px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* Individual Seat Styling */
+.seat {
+  width: 34px;
+  height: 32px;
+  border-radius: 6px 6px 3px 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+}
+
+/* Middle Aisle Break */
+.seat:nth-child(8) {
+  margin-right: 20px;
+}
+
+/* Seat States */
+.seat.available:hover {
+  transform: translateY(-3px) scale(1.08);
+  border-color: var(--primary-red);
+  color: #fff;
+  background: rgba(255, 42, 75, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 42, 75, 0.3);
+}
+
+.seat.selected {
+  background: linear-gradient(135deg, var(--primary-red), #e11d48) !important;
+  border-color: #fff !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 0 16px rgba(255, 42, 75, 0.7);
+  animation: seat-pop 0.2s ease;
+}
+
+@keyframes seat-pop {
+  0% { transform: scale(0.9); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1.05); }
+}
+
+.seat.booked {
+  background: #181d28 !important;
+  border-color: #242c3d !important;
+  color: #404b60 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.seat.booked::after {
+  content: '✕';
+  position: absolute;
+  font-size: 0.7rem;
+  color: #55627a;
+}
+
+/* Seating Legend */
+.seating-legend {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 1.5rem 0 2rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.legend-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.legend-available {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.legend-selected {
+  background: var(--primary-red);
+  box-shadow: 0 0 8px rgba(255, 42, 75, 0.5);
+}
+
+.legend-booked {
+  background: #181d28;
+  border: 1px solid #242c3d;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.legend-booked::after {
+  content: '✕';
+  font-size: 0.65rem;
+  color: #55627a;
+}
+
+/* Floating Bottom Summary Drawer */
+.booking-summary-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(13, 18, 30, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 1rem 0;
+  z-index: 990;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.7);
+  transform: translateY(110%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.booking-summary-drawer.active {
+  transform: translateY(0);
+}
+
+.selected-seats-badge {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-light);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-right: 4px;
+  margin-bottom: 4px;
+  display: inline-block;
+}
+
+.convenience-fee-pill {
+  background: rgba(0, 230, 118, 0.15);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  color: var(--accent-green);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

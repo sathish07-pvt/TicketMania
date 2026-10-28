@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}All Bookings Log — Admin | Ticket Mania{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5 py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('admin_dashboard') }}" class="text-secondary hover-white"><i class="bi bi-chevron-left me-1"></i>Dashboard</a>
+        <span class="text-secondary">/</span>
+        <h3 class="fw-bold text-white mb-0">Simulated Booking Records</h3>
+      </div>
+      <p class="text-secondary small mb-0">Audit log of all prototype customer reservations, convenience fee discounts, and refunds</p>
+    </div>
+  </div>
+
+  <div class="p-4 rounded-4 bg-dark border border-secondary shadow">
+    <div class="table-responsive">
+      <table class="table table-dark table-hover align-middle border-secondary mb-0 small">
+        <thead class="text-secondary text-uppercase" style="font-size: 0.72rem;">
+          <tr>
+            <th>Booking ID</th>
+            <th>Customer</th>
+            <th>Movie & Theatre</th>
+            <th>Showtime</th>
+            <th>Seats</th>
+            <th>Ticket Price</th>
+            <th>Base Fee</th>
+            <th>TM Discount</th>
+            <th>Final Fee</th>
+            <th>Total Paid</th>
+            <th>Payment</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in bookings %}
+            <tr>
+              <td class="font-monospace text-warning fw-bold">{{ b.booking_code }}</td>
+              <td>
+                <div class="text-white fw-semibold">{{ b.customer_name }}</div>
+                <div class="text-secondary" style="font-size: 0.7rem;">{{ b.customer_email }}</div>
+              </td>
+              <td>
+                <div class="text-white fw-semibold">{{ b.show.movie.title }}</div>
+                <div class="text-secondary" style="font-size: 0.7rem;">{{ b.show.theatre.name }}</div>
+              </td>
+              <td>
+                <div>{{ b.show.show_date }}</div>
+                <div class="text-danger fw-semibold">{{ b.show.show_time }}</div>
+              </td>
+              <td>
+                <span class="badge bg-secondary">
+                  {% for s in b.seats %}{{ s.seat_number }}{% if not loop.last %}, {% endif %}{% endfor %}
+                </span>
+                <span class="text-secondary ms-1">({{ b.ticket_count }})</span>
+              </td>
+              <td>₹{{ b.total_ticket_price }}</td>
+              <td class="text-secondary">₹{{ b.base_convenience_fee }}</td>
+              <td class="text-success fw-bold">-₹{{ b.discount_amount|int }}</td>
+              <td class="text-white fw-bold">₹{{ b.final_convenience_fee }}</td>
+              <td class="text-danger fw-bold fs-6">₹{{ b.total_amount }}</td>
+              <td>
+                <span class="badge bg-dark border border-secondary text-white">{{ b.payment_method }}</span>
+              </td>
+              <td>
+                {% if b.cancellation_status == 'CANCELLED' %}
+                  <span class="badge bg-danger-subtle text-danger">CANCELLED (₹{{ b.refund_amount|int }} refunded)</span>
+                {% else %}
+                  <span class="badge bg-success-subtle text-success">CONFIRMED</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="12" class="text-center text-secondary py-4">No bookings recorded yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

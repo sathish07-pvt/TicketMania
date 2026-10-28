@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Live Seat Map Editor — Admin | Ticket Mania{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5 py-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('admin_shows') }}" class="text-secondary hover-white"><i class="bi bi-chevron-left me-1"></i>Shows</a>
+        <span class="text-secondary">/</span>
+        <h3 class="fw-bold text-white mb-0">Seat Map Availability Controller</h3>
+      </div>
+      <p class="text-secondary small mb-0">
+        {{ show.movie.title }} &bull; {{ show.theatre.name }} ({{ show.screen.screen_name }}) &bull; {{ show.show_date }} at {{ show.show_time }}
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-success-subtle text-success p-2"><i class="bi bi-check-circle me-1"></i>Click seat to toggle block / unblock</span>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="seating-legend mb-4">
+    <div class="legend-item">
+      <div class="legend-swatch legend-available"></div>
+      <span>Available (Click to Block)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch legend-booked"></div>
+      <span>Blocked / Sold (Click to Release)</span>
+    </div>
+  </div>
+
+  <!-- Screen visual -->
+  <div class="cinema-screen-container">
+    <div class="cinema-screen-curve"></div>
+    <div class="cinema-screen-label">Screen</div>
+  </div>
+
+  <!-- Live interactive seat editor grid -->
+  <div class="seating-layout">
+    {% for row_letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'] %}
+      <div class="seat-row" data-row="{{ row_letter }}">
+        <div class="row-label">{{ row_letter }}</div>
+
+        {% for col in range(1, show.screen.total_cols + 1) %}
+          {% set seat_no = row_letter ~ col %}
+          {% set is_booked = seat_no in booked_seats %}
+
+          <div class="seat admin-editor-seat {% if is_booked %}booked{% else %}available{% endif %}"
+               data-seat-number="{{ seat_no }}"
+               data-show-id="{{ show.id }}"
+               id="adminSeat-{{ seat_no }}"
+               title="Seat {{ seat_no }} (Click to toggle availability)">
+            {{ col }}
+          </div>
+        {% endfor %}
+
+        <div class="row-label">{{ row_letter }}</div>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}
